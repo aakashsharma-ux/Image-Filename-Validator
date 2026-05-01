@@ -12,13 +12,15 @@
         <h1>Image Filename Validator</h1>
         <p class="subtitle">
           Validates filenames against the <code>mmm_dd_yyyy</code> convention &mdash;
-          e.g. <code>apr_01_2024.jpg</code>. Upload individual files or an entire folder.
+          e.g. <code>apr_01_2024.jpg</code>. Upload individual files or an entire folder
+          (including all subfolders).
         </p>
       </header>
 
       <!-- Drop Zone -->
       <div id="drop-zone" role="button" tabindex="0" aria-label="File upload area">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.5" aria-hidden="true">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <polyline points="17 8 12 3 7 8" />
           <line x1="12" y1="3" x2="12" y2="15" />
@@ -31,6 +33,14 @@
         </div>
         <input type="file" id="file-input" multiple />
         <input type="file" id="folder-input" multiple webkitdirectory />
+      </div>
+
+      <!-- Progress Bar -->
+      <div id="progress-wrap" hidden>
+        <div id="progress-track">
+          <div id="progress-bar"></div>
+        </div>
+        <span id="progress-text">Processing…</span>
       </div>
 
       <!-- Stats -->
@@ -49,34 +59,6 @@
         </div>
       </div>
 
-      <!-- Age Reference Input -->
-      <div class="age-ref-panel" id="age-ref-panel" hidden>
-        <div class="age-ref-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          Age Calculator
-        </div>
-        <div class="age-ref-inputs">
-          <div class="age-ref-field">
-            <label for="ref-age">Reference Age</label>
-            <input type="number" id="ref-age" placeholder="e.g. 20" min="0" max="150" />
-          </div>
-          <div class="age-ref-field">
-            <label for="ref-year">Reference Year</label>
-            <input type="number" id="ref-year" placeholder="e.g. 2020" min="1900" max="2100" />
-          </div>
-          <button type="button" id="calc-age-btn" class="browse-btn">Calculate Ages</button>
-        </div>
-        <p class="age-ref-hint">Formula: Age = Reference Age + (Image Year − Reference Year)</p>
-      </div>
-
-      <!-- Age Groups -->
-      <div class="age-groups-panel" id="age-groups-panel" hidden>
-        <div class="age-groups-title">Age Groups</div>
-        <div id="age-groups-list"></div>
-      </div>
-
       <!-- Actions bar -->
       <div class="actions-row" id="actions" hidden>
         <button type="button" id="clear-btn">Clear all</button>
@@ -86,37 +68,106 @@
           <option value="valid">Valid only</option>
           <option value="invalid">Invalid only</option>
         </select>
-        <label for="view-mode" class="filter-label">View:</label>
-        <select id="view-mode">
-          <option value="grid">Grid (Thumbnails)</option>
-          <option value="table">Table</option>
-        </select>
         <button type="button" id="download-btn" class="dl-btn">
           &#8681; Download CSV report
         </button>
       </div>
 
-      <!-- Results -->
-      <div id="results-wrap">
-        <p class="empty-state" id="empty">
-          Upload image files above to validate their names.
-        </p>
+      <!-- ── Age Calculation Section ─────────────────────────────────────── -->
+      <section id="age-section" hidden>
+        <div class="section-hd">
+          <div>
+            <h2 class="section-title">Age Calculation</h2>
+            <p class="section-sub">Extract age from each image year using a reference point</p>
+          </div>
+        </div>
+        <div class="age-input-row">
+          <div class="age-field">
+            <label for="ref-age">Reference Age</label>
+            <input type="number" id="ref-age" min="0" max="150" placeholder="e.g. 20" />
+          </div>
+          <div class="age-field">
+            <label for="ref-year">Reference Year</label>
+            <input type="number" id="ref-year" min="1900" max="2100" placeholder="e.g. 2020" />
+          </div>
+          <div class="age-formula">
+            <span class="formula-label">Formula</span>
+            <code>Age = Ref&nbsp;Age + (Image&nbsp;Year − Ref&nbsp;Year)</code>
+          </div>
+        </div>
 
-        <!-- Grid view -->
-        <div id="results-grid" hidden></div>
+        <!-- Age Groups -->
+        <div id="age-groups-wrap" hidden>
+          <div class="age-summary-strip">
+            <div class="age-sum-item">
+              <span class="age-sum-label">Age groups</span>
+              <strong id="cnt-groups">0</strong>
+            </div>
+            <div class="age-sum-item">
+              <span class="age-sum-label">Age range</span>
+              <strong id="age-range">—</strong>
+            </div>
+            <div class="age-sum-item">
+              <span class="age-sum-label">Dated images</span>
+              <strong id="cnt-dated">0</strong>
+            </div>
+          </div>
+          <div id="age-groups"></div>
+        </div>
+        <p id="age-hint" class="age-hint" hidden>Enter both values above to see age groups.</p>
+      </section>
 
-        <!-- Table view -->
-        <table id="results-table" hidden aria-label="Validation results">
-          <thead>
-            <tr>
-              <th scope="col">Filename</th>
-              <th scope="col">Status</th>
-              <th scope="col">Details</th>
-            </tr>
-          </thead>
-          <tbody id="results-body"></tbody>
-        </table>
-      </div>
+      <!-- ── Image Preview Grid ──────────────────────────────────────────── -->
+      <section id="preview-section" hidden>
+        <div class="section-hd">
+          <div>
+            <h2 class="section-title">Image Preview</h2>
+            <span id="preview-count-label" class="section-count"></span>
+          </div>
+          <div class="section-controls">
+            <label for="preview-filter" class="sr-only">Preview filter</label>
+            <select id="preview-filter">
+              <option value="all">All images</option>
+              <option value="valid">Valid only</option>
+              <option value="invalid">Invalid only</option>
+            </select>
+          </div>
+        </div>
+        <div id="preview-grid" role="list" aria-label="Image preview grid"></div>
+        <!-- Sentinel div watched by IntersectionObserver for infinite scroll -->
+        <div id="preview-sentinel" aria-hidden="true"></div>
+      </section>
+
+      <!-- ── Validation Table ────────────────────────────────────────────── -->
+      <section id="results-section">
+        <div class="section-hd" id="table-header-bar" hidden>
+          <div>
+            <h2 class="section-title">Validation Table</h2>
+            <span id="table-page-label" class="section-count"></span>
+          </div>
+          <div class="page-controls">
+            <button type="button" id="page-prev-btn" disabled>&#8592; Prev</button>
+            <span id="page-num" class="page-indicator"></span>
+            <button type="button" id="page-next-btn" disabled>Next &#8594;</button>
+          </div>
+        </div>
+        <div id="results-wrap">
+          <p class="empty-state" id="empty">
+            Upload image files above to validate their names.
+          </p>
+          <table id="results-table" hidden aria-label="Validation results">
+            <thead>
+              <tr>
+                <th scope="col">Filename</th>
+                <th scope="col">Status</th>
+                <th scope="col">Details</th>
+                <th scope="col">Age</th>
+              </tr>
+            </thead>
+            <tbody id="results-body"></tbody>
+          </table>
+        </div>
+      </section>
     </div>
 
     <script src="validator.js"></script>

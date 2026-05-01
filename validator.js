@@ -74,7 +74,6 @@
       return {
         valid: false,
         reason: "Uppercase letters are not allowed — use all lowercase",
-        year: null,
       };
     }
 
@@ -83,7 +82,6 @@
       return {
         valid: false,
         reason: 'Must use underscore ( _ ) separators — e.g. apr_01_2024',
-        year: null,
       };
     }
 
@@ -93,7 +91,6 @@
       return {
         valid: false,
         reason: `Must have exactly 3 parts separated by _ (got ${parts.length})`,
-        year: null,
       };
     }
 
@@ -104,7 +101,6 @@
       return {
         valid: false,
         reason: `Month must be exactly 3 lowercase letters (got "${mon}")`,
-        year: null,
       };
     }
 
@@ -113,7 +109,6 @@
       return {
         valid: false,
         reason: `"${mon}" is not a valid month abbreviation (jan–dec)`,
-        year: null,
       };
     }
 
@@ -122,7 +117,6 @@
       return {
         valid: false,
         reason: `Day must be exactly 2 digits (got "${day}") — use leading zero, e.g. 01`,
-        year: null,
       };
     }
 
@@ -132,7 +126,6 @@
       return {
         valid: false,
         reason: `Day "${day}" is out of range — must be 01–31`,
-        year: null,
       };
     }
 
@@ -141,7 +134,6 @@
       return {
         valid: false,
         reason: `Year must be exactly 4 digits (got "${yr}")`,
-        year: null,
       };
     }
 
@@ -150,7 +142,6 @@
       return {
         valid: false,
         reason: 'Does not match required format: mmm_dd_yyyy',
-        year: null,
       };
     }
 
@@ -158,7 +149,6 @@
     return {
       valid: true,
       reason: "Matches mmm_dd_yyyy format",
-      year: parseInt(yr, 10),
     };
   }
 
