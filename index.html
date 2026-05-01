@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Filename Validator</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>Image Filename Validator</h1>
+        <p class="subtitle">
+          Validates filenames against the <code>mmm_dd_yyyy</code> convention &mdash;
+          e.g. <code>apr_01_2024.jpg</code>. Upload individual files or an entire folder.
+        </p>
+      </header>
+
+      <!-- Drop Zone -->
+      <div id="drop-zone" role="button" tabindex="0" aria-label="File upload area">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+        <p>Drag &amp; drop files or folders here</p>
+        <span>or</span>
+        <div class="browse-btn-group">
+          <button class="browse-btn" id="browse-files-btn" type="button">Browse files</button>
+          <button class="browse-btn" id="browse-folder-btn" type="button">Browse folder</button>
+        </div>
+        <input type="file" id="file-input" multiple />
+        <input type="file" id="folder-input" multiple webkitdirectory />
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="stats" hidden>
+        <div class="stat-card">
+          <div class="label">Total</div>
+          <div class="value" id="cnt-total">0</div>
+        </div>
+        <div class="stat-card valid">
+          <div class="label">Valid</div>
+          <div class="value" id="cnt-valid">0</div>
+        </div>
+        <div class="stat-card invalid">
+          <div class="label">Invalid</div>
+          <div class="value" id="cnt-invalid">0</div>
+        </div>
+      </div>
+
+      <!-- Age Reference Input -->
+      <div class="age-ref-panel" id="age-ref-panel" hidden>
+        <div class="age-ref-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          Age Calculator
+        </div>
+        <div class="age-ref-inputs">
+          <div class="age-ref-field">
+            <label for="ref-age">Reference Age</label>
+            <input type="number" id="ref-age" placeholder="e.g. 20" min="0" max="150" />
+          </div>
+          <div class="age-ref-field">
+            <label for="ref-year">Reference Year</label>
+            <input type="number" id="ref-year" placeholder="e.g. 2020" min="1900" max="2100" />
+          </div>
+          <button type="button" id="calc-age-btn" class="browse-btn">Calculate Ages</button>
+        </div>
+        <p class="age-ref-hint">Formula: Age = Reference Age + (Image Year − Reference Year)</p>
+      </div>
+
+      <!-- Age Groups -->
+      <div class="age-groups-panel" id="age-groups-panel" hidden>
+        <div class="age-groups-title">Age Groups</div>
+        <div id="age-groups-list"></div>
+      </div>
+
+      <!-- Actions bar -->
+      <div class="actions-row" id="actions" hidden>
+        <button type="button" id="clear-btn">Clear all</button>
+        <label for="filter" class="filter-label">Show:</label>
+        <select id="filter">
+          <option value="all">All files</option>
+          <option value="valid">Valid only</option>
+          <option value="invalid">Invalid only</option>
+        </select>
+        <label for="view-mode" class="filter-label">View:</label>
+        <select id="view-mode">
+          <option value="grid">Grid (Thumbnails)</option>
+          <option value="table">Table</option>
+        </select>
+        <button type="button" id="download-btn" class="dl-btn">
+          &#8681; Download CSV report
+        </button>
+      </div>
+
+      <!-- Results -->
+      <div id="results-wrap">
+        <p class="empty-state" id="empty">
+          Upload image files above to validate their names.
+        </p>
+
+        <!-- Grid view -->
+        <div id="results-grid" hidden></div>
+
+        <!-- Table view -->
+        <table id="results-table" hidden aria-label="Validation results">
+          <thead>
+            <tr>
+              <th scope="col">Filename</th>
+              <th scope="col">Status</th>
+              <th scope="col">Details</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script src="validator.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
