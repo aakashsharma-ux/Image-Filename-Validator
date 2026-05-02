@@ -8,16 +8,27 @@
   </head>
   <body>
     <div id="app">
+
+      <!-- ══════════════════════════════════════════════════
+           HEADER
+      ══════════════════════════════════════════════════ -->
       <header>
         <h1>Image Filename Validator</h1>
         <p class="subtitle">
           Validates filenames against the <code>mmm_dd_yyyy</code> convention &mdash;
-          e.g. <code>apr_01_2024.jpg</code>. Upload individual files or an entire folder
-          (including all subfolders).
+          e.g. <code>apr_01_2024.jpg</code>. Supports full folder upload including
+          all nested subfolders.
         </p>
+        <div class="scope-legend">
+          <span class="scope-pill scope-all">Validation: all folders ✅</span>
+          <span class="scope-pill scope-main">Age calc: main folder only ✅</span>
+          <span class="scope-pill scope-excl">Subfolders excluded from age ❌</span>
+        </div>
       </header>
 
-      <!-- Drop Zone -->
+      <!-- ══════════════════════════════════════════════════
+           DROP ZONE
+      ══════════════════════════════════════════════════ -->
       <div id="drop-zone" role="button" tabindex="0" aria-label="File upload area">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="1.5" aria-hidden="true">
@@ -25,7 +36,7 @@
           <polyline points="17 8 12 3 7 8" />
           <line x1="12" y1="3" x2="12" y2="15" />
         </svg>
-        <p>Drag &amp; drop files or folders here</p>
+        <p>Drag &amp; drop files or folders here (subfolders scanned automatically)</p>
         <span>or</span>
         <div class="browse-btn-group">
           <button class="browse-btn" id="browse-files-btn" type="button">Browse files</button>
@@ -35,18 +46,20 @@
         <input type="file" id="folder-input" multiple webkitdirectory />
       </div>
 
-      <!-- Progress Bar -->
+      <!-- ══════════════════════════════════════════════════
+           PROGRESS BAR
+      ══════════════════════════════════════════════════ -->
       <div id="progress-wrap" hidden>
-        <div id="progress-track">
-          <div id="progress-bar"></div>
-        </div>
+        <div id="progress-track"><div id="progress-bar"></div></div>
         <span id="progress-text">Processing…</span>
       </div>
 
-      <!-- Stats -->
+      <!-- ══════════════════════════════════════════════════
+           STATS CARDS
+      ══════════════════════════════════════════════════ -->
       <div class="stats-grid" id="stats" hidden>
         <div class="stat-card">
-          <div class="label">Total</div>
+          <div class="label">Total Scanned</div>
           <div class="value" id="cnt-total">0</div>
         </div>
         <div class="stat-card valid">
@@ -59,7 +72,9 @@
         </div>
       </div>
 
-      <!-- Actions bar -->
+      <!-- ══════════════════════════════════════════════════
+           ACTIONS ROW
+      ══════════════════════════════════════════════════ -->
       <div class="actions-row" id="actions" hidden>
         <button type="button" id="clear-btn">Clear all</button>
         <label for="filter" class="filter-label">Show:</label>
@@ -73,14 +88,31 @@
         </button>
       </div>
 
-      <!-- ── Age Calculation Section ─────────────────────────────────────── -->
+      <!-- ══════════════════════════════════════════════════
+           AGE CALCULATION SECTION
+           ⚠️  MAIN FOLDER FILES ONLY — subfolders excluded
+      ══════════════════════════════════════════════════ -->
       <section id="age-section" hidden>
         <div class="section-hd">
           <div>
             <h2 class="section-title">Age Calculation</h2>
-            <p class="section-sub">Extract age from each image year using a reference point</p>
+            <p class="section-sub">
+              Based on <strong>main folder files only</strong> — subfolders (including
+              <code>truth_images</code>) are excluded from age calculation.
+            </p>
           </div>
+          <span id="cnt-main-folder" class="section-count main-folder-count"></span>
         </div>
+
+        <div class="age-scope-banner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          Age is calculated only from images in the <strong>root / main folder</strong>.
+          All subfolders are intentionally excluded.
+        </div>
+
         <div class="age-input-row">
           <div class="age-field">
             <label for="ref-age">Reference Age</label>
@@ -96,7 +128,6 @@
           </div>
         </div>
 
-        <!-- Age Groups -->
         <div id="age-groups-wrap" hidden>
           <div class="age-summary-strip">
             <div class="age-sum-item">
@@ -114,10 +145,13 @@
           </div>
           <div id="age-groups"></div>
         </div>
-        <p id="age-hint" class="age-hint" hidden>Enter both values above to see age groups.</p>
+        <p id="age-hint" class="age-hint" hidden>Enter Reference Age and Year above to see age groups.</p>
+        <p id="main-folder-note" class="main-folder-note" hidden></p>
       </section>
 
-      <!-- ── Image Preview Grid ──────────────────────────────────────────── -->
+      <!-- ══════════════════════════════════════════════════
+           IMAGE PREVIEW GRID
+      ══════════════════════════════════════════════════ -->
       <section id="preview-section" hidden>
         <div class="section-hd">
           <div>
@@ -134,15 +168,16 @@
           </div>
         </div>
         <div id="preview-grid" role="list" aria-label="Image preview grid"></div>
-        <!-- Sentinel div watched by IntersectionObserver for infinite scroll -->
         <div id="preview-sentinel" aria-hidden="true"></div>
       </section>
 
-      <!-- ── Validation Table ────────────────────────────────────────────── -->
+      <!-- ══════════════════════════════════════════════════
+           VALIDATION TABLE
+      ══════════════════════════════════════════════════ -->
       <section id="results-section">
         <div class="section-hd" id="table-header-bar" hidden>
           <div>
-            <h2 class="section-title">Validation Table</h2>
+            <h2 class="section-title">Validation Report</h2>
             <span id="table-page-label" class="section-count"></span>
           </div>
           <div class="page-controls">
@@ -155,20 +190,66 @@
           <p class="empty-state" id="empty">
             Upload image files above to validate their names.
           </p>
-          <table id="results-table" hidden aria-label="Validation results">
-            <thead>
-              <tr>
-                <th scope="col">Filename</th>
-                <th scope="col">Status</th>
-                <th scope="col">Details</th>
-                <th scope="col">Age</th>
-              </tr>
-            </thead>
-            <tbody id="results-body"></tbody>
-          </table>
+          <div class="table-scroll-wrap">
+            <table id="results-table" hidden aria-label="Validation results">
+              <thead>
+                <tr>
+                  <th scope="col">Person ID</th>
+                  <th scope="col">Folder</th>
+                  <th scope="col">Filename</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Error Type</th>
+                  <th scope="col">Error Description</th>
+                  <th scope="col">Age</th>
+                </tr>
+              </thead>
+              <tbody id="results-body"></tbody>
+            </table>
+          </div>
         </div>
       </section>
-    </div>
+
+      <!-- ══════════════════════════════════════════════════
+           AGE RANGE GENERATOR  (fully independent module)
+      ══════════════════════════════════════════════════ -->
+      <section id="age-range-section">
+        <div class="section-hd">
+          <div>
+            <h2 class="section-title">Age Range Generator</h2>
+            <p class="section-sub">
+              Independent tool — generates a full age timeline (21 → 12 years)
+              from any reference age &amp; year. No file upload required.
+            </p>
+          </div>
+        </div>
+
+        <div class="ar-input-row">
+          <div class="age-field">
+            <label for="ar-age">Person's Age</label>
+            <input type="number" id="ar-age" min="1" max="120" placeholder="e.g. 20" />
+          </div>
+          <div class="age-field">
+            <label for="ar-year">In Year</label>
+            <input type="number" id="ar-year" min="1900" max="2100" placeholder="e.g. 2020" />
+          </div>
+          <div class="ar-btn-group">
+            <button type="button" id="ar-generate-btn" class="ar-btn-primary">Generate</button>
+            <button type="button" id="ar-clear-btn"    class="ar-btn-ghost">Clear</button>
+            <button type="button" id="ar-copy-btn"     class="ar-btn-ghost" hidden>Copy</button>
+          </div>
+        </div>
+
+        <div class="ar-example">
+          Example: Age 20 in 2020 →
+          <code>2021 – 21 years</code>,
+          <code>2020 – 20 years</code>,
+          <code>2019 – 19 years</code> … down to 12
+        </div>
+
+        <div id="ar-output" hidden></div>
+      </section>
+
+    </div><!-- /#app -->
 
     <script src="validator.js"></script>
     <script src="app.js"></script>
