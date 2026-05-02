@@ -9,246 +9,270 @@
   <body>
     <div id="app">
 
-      <!-- ══════════════════════════════════════════════════
-           HEADER
-      ══════════════════════════════════════════════════ -->
-      <header>
-        <h1>Image Filename Validator</h1>
-        <p class="subtitle">
-          Validates filenames against the <code>mmm_dd_yyyy</code> convention &mdash;
-          e.g. <code>apr_01_2024.jpg</code>. Supports full folder upload including
-          all nested subfolders.
-        </p>
-        <div class="scope-legend">
-          <span class="scope-pill scope-all">Validation: all folders ✅</span>
-          <span class="scope-pill scope-main">Age calc: main folder only ✅</span>
-          <span class="scope-pill scope-excl">Subfolders excluded from age ❌</span>
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="topbar-inner">
+          <div class="topbar-brand">
+            <div class="brand-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+            </div>
+            <div>
+              <h1>Image Filename Validator</h1>
+              <p class="subtitle">Validates against <code>mmm_dd_yyyy</code> — e.g. <code>apr_01_2024.jpg</code>. Full folder &amp; subfolder support.</p>
+            </div>
+          </div>
+          <div class="scope-legend">
+            <span class="scope-pill scope-all"><span class="scope-dot"></span>Validation: all folders</span>
+            <span class="scope-pill scope-main"><span class="scope-dot"></span>Age calc: main folder only</span>
+            <span class="scope-pill scope-excl"><span class="scope-dot"></span>Subfolders excluded from age</span>
+          </div>
         </div>
       </header>
 
-      <!-- ══════════════════════════════════════════════════
-           DROP ZONE
-      ══════════════════════════════════════════════════ -->
-      <div id="drop-zone" role="button" tabindex="0" aria-label="File upload area">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="1.5" aria-hidden="true">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="17 8 12 3 7 8" />
-          <line x1="12" y1="3" x2="12" y2="15" />
-        </svg>
-        <p>Drag &amp; drop files or folders here (subfolders scanned automatically)</p>
-        <span>or</span>
-        <div class="browse-btn-group">
-          <button class="browse-btn" id="browse-files-btn" type="button">Browse files</button>
-          <button class="browse-btn" id="browse-folder-btn" type="button">Browse folder</button>
-        </div>
-        <input type="file" id="file-input" multiple />
-        <input type="file" id="folder-input" multiple webkitdirectory />
-      </div>
+      <!-- TWO-COLUMN LAYOUT -->
+      <div class="layout-wrapper">
 
-      <!-- ══════════════════════════════════════════════════
-           PROGRESS BAR
-      ══════════════════════════════════════════════════ -->
-      <div id="progress-wrap" hidden>
-        <div id="progress-track"><div id="progress-bar"></div></div>
-        <span id="progress-text">Processing…</span>
-      </div>
+        <!-- MAIN COLUMN -->
+        <main class="main-col">
 
-      <!-- ══════════════════════════════════════════════════
-           STATS CARDS
-      ══════════════════════════════════════════════════ -->
-      <div class="stats-grid" id="stats" hidden>
-        <div class="stat-card">
-          <div class="label">Total Scanned</div>
-          <div class="value" id="cnt-total">0</div>
-        </div>
-        <div class="stat-card valid">
-          <div class="label">Valid</div>
-          <div class="value" id="cnt-valid">0</div>
-        </div>
-        <div class="stat-card invalid">
-          <div class="label">Invalid</div>
-          <div class="value" id="cnt-invalid">0</div>
-        </div>
-      </div>
-
-      <!-- ══════════════════════════════════════════════════
-           ACTIONS ROW
-      ══════════════════════════════════════════════════ -->
-      <div class="actions-row" id="actions" hidden>
-        <button type="button" id="clear-btn">Clear all</button>
-        <label for="filter" class="filter-label">Show:</label>
-        <select id="filter">
-          <option value="all">All files</option>
-          <option value="valid">Valid only</option>
-          <option value="invalid">Invalid only</option>
-        </select>
-        <button type="button" id="download-btn" class="dl-btn">
-          &#8681; Download CSV report
-        </button>
-      </div>
-
-      <!-- ══════════════════════════════════════════════════
-           AGE CALCULATION SECTION
-           ⚠️  MAIN FOLDER FILES ONLY — subfolders excluded
-      ══════════════════════════════════════════════════ -->
-      <section id="age-section" hidden>
-        <div class="section-hd">
-          <div>
-            <h2 class="section-title">Age Calculation</h2>
-            <p class="section-sub">
-              Based on <strong>main folder files only</strong> — subfolders (including
-              <code>truth_images</code>) are excluded from age calculation.
-            </p>
-          </div>
-          <span id="cnt-main-folder" class="section-count main-folder-count"></span>
-        </div>
-
-        <div class="age-scope-banner">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          Age is calculated only from images in the <strong>root / main folder</strong>.
-          All subfolders are intentionally excluded.
-        </div>
-
-        <div class="age-input-row">
-          <div class="age-field">
-            <label for="ref-age">Reference Age</label>
-            <input type="number" id="ref-age" min="0" max="150" placeholder="e.g. 20" />
-          </div>
-          <div class="age-field">
-            <label for="ref-year">Reference Year</label>
-            <input type="number" id="ref-year" min="1900" max="2100" placeholder="e.g. 2020" />
-          </div>
-          <div class="age-formula">
-            <span class="formula-label">Formula</span>
-            <code>Age = Ref&nbsp;Age + (Image&nbsp;Year − Ref&nbsp;Year)</code>
-          </div>
-        </div>
-
-        <div id="age-groups-wrap" hidden>
-          <div class="age-summary-strip">
-            <div class="age-sum-item">
-              <span class="age-sum-label">Age groups</span>
-              <strong id="cnt-groups">0</strong>
+          <!-- Drop Zone -->
+          <div id="drop-zone" role="button" tabindex="0" aria-label="File upload area">
+            <div class="dropzone-icon" aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
             </div>
-            <div class="age-sum-item">
-              <span class="age-sum-label">Age range</span>
-              <strong id="age-range">—</strong>
+            <p class="dropzone-headline">Drop files or folders here</p>
+            <p class="dropzone-sub">Subfolders are scanned automatically at any depth</p>
+            <div class="browse-btn-group">
+              <button class="browse-btn" id="browse-files-btn" type="button">Browse files</button>
+              <button class="browse-btn browse-btn-ghost" id="browse-folder-btn" type="button">Browse folder</button>
             </div>
-            <div class="age-sum-item">
-              <span class="age-sum-label">Dated images</span>
-              <strong id="cnt-dated">0</strong>
+            <input type="file" id="file-input" multiple />
+            <input type="file" id="folder-input" multiple webkitdirectory />
+          </div>
+
+          <!-- Progress Bar -->
+          <div id="progress-wrap" hidden>
+            <div class="progress-header">
+              <span id="progress-text">Processing…</span>
+            </div>
+            <div id="progress-track"><div id="progress-bar"></div></div>
+          </div>
+
+          <!-- Stats -->
+          <div class="stats-grid" id="stats" hidden>
+            <div class="stat-card">
+              <div class="stat-icon-wrap stat-neutral" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+              </div>
+              <div class="stat-value" id="cnt-total">0</div>
+              <div class="stat-label">Total Scanned</div>
+            </div>
+            <div class="stat-card stat-valid">
+              <div class="stat-icon-wrap stat-green" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="stat-value" id="cnt-valid">0</div>
+              <div class="stat-label">Valid</div>
+            </div>
+            <div class="stat-card stat-invalid">
+              <div class="stat-icon-wrap stat-red" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </div>
+              <div class="stat-value" id="cnt-invalid">0</div>
+              <div class="stat-label">Invalid</div>
             </div>
           </div>
-          <div id="age-groups"></div>
-        </div>
-        <p id="age-hint" class="age-hint" hidden>Enter Reference Age and Year above to see age groups.</p>
-        <p id="main-folder-note" class="main-folder-note" hidden></p>
-      </section>
 
-      <!-- ══════════════════════════════════════════════════
-           IMAGE PREVIEW GRID
-      ══════════════════════════════════════════════════ -->
-      <section id="preview-section" hidden>
-        <div class="section-hd">
-          <div>
-            <h2 class="section-title">Image Preview</h2>
-            <span id="preview-count-label" class="section-count"></span>
+          <!-- Actions -->
+          <div class="actions-row" id="actions" hidden>
+            <button type="button" id="clear-btn" class="action-ghost">Clear all</button>
+            <div class="filter-group">
+              <label for="filter" class="filter-label">Show</label>
+              <select id="filter">
+                <option value="all">All files</option>
+                <option value="valid">Valid only</option>
+                <option value="invalid">Invalid only</option>
+              </select>
+            </div>
+            <button type="button" id="download-btn" class="action-primary">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
           </div>
-          <div class="section-controls">
-            <label for="preview-filter" class="sr-only">Preview filter</label>
-            <select id="preview-filter">
-              <option value="all">All images</option>
-              <option value="valid">Valid only</option>
-              <option value="invalid">Invalid only</option>
-            </select>
-          </div>
-        </div>
-        <div id="preview-grid" role="list" aria-label="Image preview grid"></div>
-        <div id="preview-sentinel" aria-hidden="true"></div>
-      </section>
 
-      <!-- ══════════════════════════════════════════════════
-           VALIDATION TABLE
-      ══════════════════════════════════════════════════ -->
-      <section id="results-section">
-        <div class="section-hd" id="table-header-bar" hidden>
-          <div>
-            <h2 class="section-title">Validation Report</h2>
-            <span id="table-page-label" class="section-count"></span>
-          </div>
-          <div class="page-controls">
-            <button type="button" id="page-prev-btn" disabled>&#8592; Prev</button>
-            <span id="page-num" class="page-indicator"></span>
-            <button type="button" id="page-next-btn" disabled>Next &#8594;</button>
-          </div>
-        </div>
-        <div id="results-wrap">
-          <p class="empty-state" id="empty">
-            Upload image files above to validate their names.
-          </p>
-          <div class="table-scroll-wrap">
-            <table id="results-table" hidden aria-label="Validation results">
-              <thead>
-                <tr>
-                  <th scope="col">Person ID</th>
-                  <th scope="col">Folder</th>
-                  <th scope="col">Filename</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Error Type</th>
-                  <th scope="col">Error Description</th>
-                  <th scope="col">Age</th>
-                </tr>
-              </thead>
-              <tbody id="results-body"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+          <!-- Age Calculation -->
+          <section id="age-section" hidden>
+            <div class="card">
+              <div class="card-hd">
+                <div class="card-hd-left">
+                  <span class="card-chip chip-blue" aria-hidden="true">Age</span>
+                  <div>
+                    <h2 class="card-title">Age Calculation</h2>
+                    <p class="card-sub">Main folder images only — subfolders excluded</p>
+                  </div>
+                </div>
+                <span id="cnt-main-folder" class="tag-pill tag-blue"></span>
+              </div>
 
-      <!-- ══════════════════════════════════════════════════
-           AGE RANGE GENERATOR  (fully independent module)
-      ══════════════════════════════════════════════════ -->
-      <section id="age-range-section">
-        <div class="section-hd">
-          <div>
-            <h2 class="section-title">Age Range Generator</h2>
-            <p class="section-sub">
-              Independent tool — generates a full age timeline (21 → 12 years)
-              from any reference age &amp; year. No file upload required.
-            </p>
-          </div>
-        </div>
+              <div class="scope-notice">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Age uses only <strong>root folder</strong> images. Subfolders (including <code>truth_images</code>) are intentionally excluded.
+              </div>
 
-        <div class="ar-input-row">
-          <div class="age-field">
-            <label for="ar-age">Person's Age</label>
-            <input type="number" id="ar-age" min="1" max="120" placeholder="e.g. 20" />
-          </div>
-          <div class="age-field">
-            <label for="ar-year">In Year</label>
-            <input type="number" id="ar-year" min="1900" max="2100" placeholder="e.g. 2020" />
-          </div>
-          <div class="ar-btn-group">
-            <button type="button" id="ar-generate-btn" class="ar-btn-primary">Generate</button>
-            <button type="button" id="ar-clear-btn"    class="ar-btn-ghost">Clear</button>
-            <button type="button" id="ar-copy-btn"     class="ar-btn-ghost" hidden>Copy</button>
-          </div>
-        </div>
+              <div class="age-input-row">
+                <div class="age-field">
+                  <label for="ref-age">Reference Age</label>
+                  <input type="number" id="ref-age" min="0" max="150" placeholder="e.g. 20" />
+                </div>
+                <div class="age-field">
+                  <label for="ref-year">Reference Year</label>
+                  <input type="number" id="ref-year" min="1900" max="2100" placeholder="e.g. 2020" />
+                </div>
+                <div class="age-formula">
+                  <span class="formula-label">Formula</span>
+                  <code>Age = Ref Age + (Year − Ref Year)</code>
+                </div>
+              </div>
 
-        <div class="ar-example">
-          Example: Age 20 in 2020 →
-          <code>2021 – 21 years</code>,
-          <code>2020 – 20 years</code>,
-          <code>2019 – 19 years</code> … down to 12
-        </div>
+              <div id="age-groups-wrap" hidden>
+                <div class="age-summary-strip">
+                  <div class="age-sum-item"><span class="age-sum-label">Groups</span><strong id="cnt-groups">0</strong></div>
+                  <div class="age-sum-item"><span class="age-sum-label">Range</span><strong id="age-range">—</strong></div>
+                  <div class="age-sum-item"><span class="age-sum-label">Dated images</span><strong id="cnt-dated">0</strong></div>
+                </div>
+                <div id="age-groups"></div>
+              </div>
+              <p id="age-hint" class="age-hint" hidden>Enter Reference Age and Year above to see age groups.</p>
+              <p id="main-folder-note" class="main-folder-note" hidden></p>
+            </div>
+          </section>
 
-        <div id="ar-output" hidden></div>
-      </section>
+          <!-- Validation Report (ABOVE preview) -->
+          <section id="results-section">
+            <div class="card card-flush">
+              <div class="card-hd" id="table-header-bar" hidden>
+                <div class="card-hd-left">
+                  <span class="card-chip chip-neutral" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                  </span>
+                  <div>
+                    <h2 class="card-title">Validation Report</h2>
+                    <span id="table-page-label" class="card-sub"></span>
+                  </div>
+                </div>
+                <div class="page-controls">
+                  <button type="button" id="page-prev-btn" disabled>&#8592;</button>
+                  <span id="page-num" class="page-indicator"></span>
+                  <button type="button" id="page-next-btn" disabled>&#8594;</button>
+                </div>
+              </div>
+              <div id="results-wrap">
+                <p class="empty-state" id="empty">
+                  <span class="empty-icon" aria-hidden="true">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  </span>
+                  Upload image files or drop a folder above to begin validation.
+                </p>
+                <div class="table-scroll-wrap">
+                  <table id="results-table" hidden aria-label="Validation results">
+                    <thead>
+                      <tr>
+                        <th>Person ID</th><th>Folder</th><th>Filename</th>
+                        <th>Status</th><th>Error Type</th><th>Error Description</th><th>Age</th>
+                      </tr>
+                    </thead>
+                    <tbody id="results-body"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
 
+          <!-- Image Preview (BELOW validation) -->
+          <section id="preview-section" hidden>
+            <div class="card">
+              <div class="card-hd">
+                <div class="card-hd-left">
+                  <span class="card-chip chip-neutral" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  </span>
+                  <div>
+                    <h2 class="card-title">Image Preview</h2>
+                    <span id="preview-count-label" class="card-sub"></span>
+                  </div>
+                </div>
+                <div class="section-controls">
+                  <label for="preview-filter" class="sr-only">Preview filter</label>
+                  <select id="preview-filter">
+                    <option value="all">All images</option>
+                    <option value="valid">Valid only</option>
+                    <option value="invalid">Invalid only</option>
+                  </select>
+                </div>
+              </div>
+              <div id="preview-grid" role="list" aria-label="Image preview grid"></div>
+              <div id="preview-sentinel" aria-hidden="true"></div>
+            </div>
+          </section>
+
+        </main>
+
+        <!-- SIDE PANEL (sticky) -->
+        <aside class="side-panel">
+          <div class="side-sticky">
+            <section id="age-range-section">
+              <div class="card card-purple">
+                <div class="card-hd">
+                  <div class="card-hd-left">
+                    <span class="card-chip chip-purple" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    </span>
+                    <div>
+                      <h2 class="card-title">Age Range Generator</h2>
+                      <p class="card-sub">Independent — no upload needed</p>
+                    </div>
+                  </div>
+                </div>
+
+                <p class="ar-desc">Enter an age &amp; year to generate the full timeline from <strong>21 → 12 years</strong>.</p>
+
+                <div class="ar-fields">
+                  <div class="age-field">
+                    <label for="ar-age">Person's Age</label>
+                    <input type="number" id="ar-age" min="1" max="120" placeholder="e.g. 20" />
+                  </div>
+                  <div class="age-field">
+                    <label for="ar-year">In Year</label>
+                    <input type="number" id="ar-year" min="1900" max="2100" placeholder="e.g. 2020" />
+                  </div>
+                </div>
+
+                <div class="ar-example">
+                  <code>2021 – 21 yrs</code><code>2020 – 20 yrs</code><code>2019 – 19 yrs</code><span>… → 12</span>
+                </div>
+
+                <div class="ar-btn-row">
+                  <button type="button" id="ar-generate-btn" class="ar-btn-primary">Generate</button>
+                  <button type="button" id="ar-clear-btn" class="ar-btn-ghost">Clear</button>
+                  <button type="button" id="ar-copy-btn" class="ar-btn-ghost" hidden>Copy</button>
+                </div>
+
+                <div id="ar-output" hidden></div>
+              </div>
+            </section>
+          </div>
+        </aside>
+
+      </div><!-- /.layout-wrapper -->
     </div><!-- /#app -->
 
     <script src="validator.js"></script>
