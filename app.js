@@ -116,6 +116,8 @@
   var cntMainEl         = document.getElementById("cnt-main-folder");
   var ageHintEl         = document.getElementById("age-hint");
   var mainFolderNote    = document.getElementById("main-folder-note");
+  var sheetsExportWrap  = document.getElementById("sheets-export-wrap");
+  var sheetsGridEl      = document.getElementById("sheets-grid");
   // Preview
   var previewSection    = document.getElementById("preview-section");
   var previewGrid       = document.getElementById("preview-grid");
@@ -483,6 +485,50 @@
         '</div>';
     }
     ageGroupsEl.innerHTML = html;
+
+    // ── Google Sheets export block ───────────────────────────
+    _renderSheetsExport(groups);
+  }
+
+  /**
+   * Build the Google Sheets copy-paste grid.
+   * Fixed columns: SHEETS_AGES (21 → 12).
+   * Count = 0 for ages not present in groups.
+   * Tab-separated clipboard format:
+   *   Row 1: "21 years\t20 years\t...\t12 years"
+   *   Row 2: "3\t3\t2\t3\t0\t...\t0"
+   */
+  function _renderSheetsExport(groups) {
+    // Build header and count rows over the fixed SHEETS_AGES range
+    var headerCells = "";
+    var countCells  = "";
+
+    for (var i = 0; i < SHEETS_AGES.length; i++) {
+      var a     = SHEETS_AGES[i];
+      var count = groups[a] ? groups[a].length : 0;
+      var hasVal = count > 0;
+
+      headerCells +=
+        '<div class="sg-cell sg-head" title="' + a + ' years">' +
+          a + '&nbsp;<span class="sg-unit">yrs</span>' +
+        '</div>';
+
+      countCells +=
+        '<div class="sg-cell sg-count' + (hasVal ? ' sg-has-val' : ' sg-zero') + '">' +
+          count +
+        '</div>';
+    }
+
+    sheetsGridEl.innerHTML =
+      '<div class="sg-row sg-header-row">' + headerCells + '</div>' +
+      '<div class="sg-row sg-count-row">'  + countCells  + '</div>';
+
+    sheetsExportWrap.hidden = false;
+
+    // Store tab-separated data on the wrapper for the copy button
+    var headerRow = SHEETS_AGES.map(function (a) { return a + " years"; }).join("\t");
+    var countRow  = SHEETS_AGES.map(function (a) { return groups[a] ? groups[a].length : 0; }).join("\t");
+    sheetsExportWrap.dataset.tsv = headerRow + "\n" + countRow;
   }
 
   /* ═══════════════════════════════════════════════════════════════
@@ -688,6 +734,9 @@
   var AGE_RANGE_MAX = 21;
   var AGE_RANGE_MIN = 12;
 
+  // Fixed age columns for Google Sheets export (21 → 12, matching generator)
+  var SHEETS_AGES = [21, 20, 19, 18, 17, 16, 15, 14, 13, 12];
+
   function generateAgeRange() {
     var inputAge  = parseInt(arAgeInput.value, 10);
     var inputYear = parseInt(arYearInput.value, 10);
@@ -784,6 +833,7 @@
     if (sentinelObserver) { sentinelObserver.disconnect(); sentinelObserver = null; }
     statsEl.hidden = true; actionsEl.hidden = true;
     ageSectionEl.hidden = true; previewSection.hidden = true; tableHeaderBar.hidden = true;
+    if (sheetsExportWrap) { sheetsExportWrap.hidden = true; sheetsGridEl.innerHTML = ""; }
     setEmpty("Upload image files or drop a folder above to validate filenames.");
   }
 
@@ -855,6 +905,33 @@
   arGenerateBtn.addEventListener("click", generateAgeRange);
   arClearBtn.addEventListener("click",    clearAgeRange);
   arCopyBtn.addEventListener("click",     copyAgeRange);
+
+  // Sheets export copy button
+  document.getElementById("sheets-copy-btn").addEventListener("click", function () {
+    var tsv = sheetsExportWrap.dataset.tsv || "";
+    if (!tsv) return;
+    var btn = this;
+    navigator.clipboard.writeText(tsv).then(function () {
+      btn.classList.add("copied");
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+      setTimeout(function () {
+        btn.classList.remove("copied");
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy';
+      }, 2200);
+    }).catch(function () {
+      // Fallback
+      var ta = document.createElement("textarea");
+      ta.value = tsv; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select(); document.execCommand("copy");
+      document.body.removeChild(ta);
+      btn.classList.add("copied");
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+      setTimeout(function () {
+        btn.classList.remove("copied");
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy';
+      }, 2200);
+    });
+  });
   arAgeInput.addEventListener("keydown",  function (e) { if (e.key==="Enter") generateAgeRange(); });
   arYearInput.addEventListener("keydown", function (e) { if (e.key==="Enter") generateAgeRange(); });
 
