@@ -1501,3 +1501,119 @@ td.age-col { font-size: 11px; text-align: right; white-space: nowrap; }
 @media (prefers-color-scheme: dark) {
   .sg-zero { background: rgba(20,40,10,0.3); border-color: #1e3d0d; color: #4a8a2a; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   AGE GROUPS — COMPACT HORIZONTAL STRIP  (matches screenshot)
+══════════════════════════════════════════════════════════════ */
+
+/* Override old grid layout */
+#age-groups { display: block; }
+
+.agb-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.agb-row {
+  display: flex;
+  gap: 3px;
+  min-width: max-content;
+}
+
+/* ── Header row (age labels) ─────────────────────────────── */
+.agb-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 72px;
+  flex: 1;
+  padding: 5px 6px;
+  background: #f0c060;
+  border: 1px solid #d9a030;
+  border-radius: 5px 5px 0 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #5a3800;
+  white-space: nowrap;
+  cursor: default;
+}
+
+@media (prefers-color-scheme: dark) {
+  .agb-head { background: #5a3800; border-color: #7a5200; color: #f9d070; }
+}
+
+.agb-age-num  { font-weight: 700; }
+.agb-age-unit { font-size: 10px; font-weight: 500; opacity: 0.8; }
+
+.agb-filter {
+  font-size: 11px;
+  opacity: 0.55;
+  margin-left: 2px;
+}
+
+/* ── Count row (image counts) ──────────────────────────────── */
+.agb-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 72px;
+  flex: 1;
+  padding: 7px 6px;
+  border: 1px solid #d9b060;
+  border-radius: 0 0 5px 5px;
+  cursor: default;
+  transition: filter 0.1s;
+}
+
+.agb-count:hover { filter: brightness(0.96); }
+
+/* Non-zero: warm amber background */
+.agb-has-val {
+  background: #fde8a8;
+  border-color: #d9a030;
+}
+
+@media (prefers-color-scheme: dark) {
+  .agb-has-val { background: #3d2a00; border-color: #7a5200; }
+}
+
+/* Zero: light / muted */
+.agb-zero {
+  background: #fdf8ee;
+  border-color: #e8d898;
+}
+
+@media (prefers-color-scheme: dark) {
+  .agb-zero { background: #241e10; border-color: #3d3420; }
+}
+
+.agb-num {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #5a3800;
+  line-height: 1;
+}
+
+.agb-has-val .agb-num { color: #5a3800; }
+.agb-zero    .agb-num { color: #b0a080; font-size: 16px; font-weight: 500; }
+
+@media (prefers-color-scheme: dark) {
+  .agb-has-val .agb-num { color: #f9d070; }
+  .agb-zero    .agb-num { color: #4a4030; }
+}
+
+.agb-arrow {
+  font-size: 9px;
+  opacity: 0.45;
+  margin-top: 2px;
+  color: #5a3800;
+}
+
+@media (prefers-color-scheme: dark) { .agb-arrow { color: #c0a050; } }

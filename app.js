@@ -460,75 +460,31 @@
     ageRangeEl.textContent  = ages[0] + " – " + ages[ages.length - 1];
     cntDatedEl.textContent  = datedCount.toLocaleString();
 
-    var html = "";
-    for (var ai = 0; ai < ages.length; ai++) {
-      var age   = ages[ai];
-      var items = groups[age];
-      var count = items.length;
-      var samples = "";
-      var limit = Math.min(4, count);
-      for (var si = 0; si < limit; si++) {
-        samples += '<span class="age-sample">' + escHtml(items[si].name) + '</span>';
-      }
-      if (count > limit) {
-        samples += '<span class="age-more">+' + (count - limit).toLocaleString() + ' more</span>';
-      }
-      html +=
-        '<div class="age-group-card">' +
-          '<div class="age-group-row">' +
-            '<span class="age-group-label">' + age + ' years old</span>' +
-            '<span class="age-group-count">' +
-              count.toLocaleString() + ' image' + (count !== 1 ? 's' : '') +
-            '</span>' +
-          '</div>' +
-          '<div class="age-group-samples">' + samples + '</div>' +
-        '</div>';
-    }
-    ageGroupsEl.innerHTML = html;
-
-    // ── Google Sheets export block ───────────────────────────
-    _renderSheetsExport(groups);
-  }
-
-  /**
-   * Build the Google Sheets copy-paste grid.
-   * Fixed columns: SHEETS_AGES (21 → 12).
-   * Count = 0 for ages not present in groups.
-   * Tab-separated clipboard format:
-   *   Row 1: "21 years\t20 years\t...\t12 years"
-   *   Row 2: "3\t3\t2\t3\t0\t...\t0"
-   */
-  function _renderSheetsExport(groups) {
-    // Build header and count rows over the fixed SHEETS_AGES range
+    // ── Compact horizontal strip (fixed 21 → 12, always all columns) ──
     var headerCells = "";
     var countCells  = "";
-
-    for (var i = 0; i < SHEETS_AGES.length; i++) {
-      var a     = SHEETS_AGES[i];
-      var count = groups[a] ? groups[a].length : 0;
+    for (var ci = 0; ci < SHEETS_AGES.length; ci++) {
+      var a      = SHEETS_AGES[ci];
+      var count  = groups[a] ? groups[a].length : 0;
       var hasVal = count > 0;
-
       headerCells +=
-        '<div class="sg-cell sg-head" title="' + a + ' years">' +
-          a + '&nbsp;<span class="sg-unit">yrs</span>' +
+        '<div class="agb-head" title="' + a + ' years">' +
+          '<span class="agb-age-num">' + a + '</span>' +
+          '<span class="agb-age-unit"> yea</span>' +
+          '<span class="agb-filter" aria-hidden="true">&#8801;</span>' +
         '</div>';
-
       countCells +=
-        '<div class="sg-cell sg-count' + (hasVal ? ' sg-has-val' : ' sg-zero') + '">' +
-          count +
+        '<div class="agb-count ' + (hasVal ? 'agb-has-val' : 'agb-zero') + '">' +
+          '<span class="agb-num">' + count + '</span>' +
+          '<span class="agb-arrow" aria-hidden="true">&#9660;</span>' +
         '</div>';
     }
+    ageGroupsEl.innerHTML =
+      '<div class="agb-wrap">' +
+        '<div class="agb-row agb-row-head">' + headerCells + '</div>' +
+        '<div class="agb-row agb-row-count">' + countCells  + '</div>' +
+      '</div>';
 
-    sheetsGridEl.innerHTML =
-      '<div class="sg-row sg-header-row">' + headerCells + '</div>' +
-      '<div class="sg-row sg-count-row">'  + countCells  + '</div>';
-
-    sheetsExportWrap.hidden = false;
-
-    // Store tab-separated data on the wrapper for the copy button
-    var headerRow = SHEETS_AGES.map(function (a) { return a + " years"; }).join("\t");
-    var countRow  = SHEETS_AGES.map(function (a) { return groups[a] ? groups[a].length : 0; }).join("\t");
-    sheetsExportWrap.dataset.tsv = headerRow + "\n" + countRow;
   }
 
   /* ═══════════════════════════════════════════════════════════════
@@ -906,32 +862,6 @@
   arClearBtn.addEventListener("click",    clearAgeRange);
   arCopyBtn.addEventListener("click",     copyAgeRange);
 
-  // Sheets export copy button
-  document.getElementById("sheets-copy-btn").addEventListener("click", function () {
-    var tsv = sheetsExportWrap.dataset.tsv || "";
-    if (!tsv) return;
-    var btn = this;
-    navigator.clipboard.writeText(tsv).then(function () {
-      btn.classList.add("copied");
-      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
-      setTimeout(function () {
-        btn.classList.remove("copied");
-        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy';
-      }, 2200);
-    }).catch(function () {
-      // Fallback
-      var ta = document.createElement("textarea");
-      ta.value = tsv; ta.style.position = "fixed"; ta.style.opacity = "0";
-      document.body.appendChild(ta); ta.select(); document.execCommand("copy");
-      document.body.removeChild(ta);
-      btn.classList.add("copied");
-      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
-      setTimeout(function () {
-        btn.classList.remove("copied");
-        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy';
-      }, 2200);
-    });
-  });
   arAgeInput.addEventListener("keydown",  function (e) { if (e.key==="Enter") generateAgeRange(); });
   arYearInput.addEventListener("keydown", function (e) { if (e.key==="Enter") generateAgeRange(); });
 
