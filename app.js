@@ -397,6 +397,7 @@
     renderPreviewGrid(true);
     renderTable();
     syncAgeSection();
+    runFolderValidation();
   }
 
   /* ═══════════════════════════════════════════════════════════════
@@ -775,6 +776,189 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════
+     FOLDER STRUCTURE VALIDATION
+     Checks per root folder (personId):
+       1. Subfolder names must be exactly "truth_images" (case-sensitive)
+       2. Images inside truth_images must have a minimum 2-year gap (by year)
+       3. Total images (main + truth_images) must be at least 5
+  ═══════════════════════════════════════════════════════════════ */
+
+  var VALID_SUBFOLDER  = "truth_images";
+  var MIN_TOTAL_IMGS   = 5;
+  var MIN_YEAR_GAP     = 2;
+
+  function runFolderValidation() {
+    var sectionEl = document.getElementById("folder-validation-section");
+    var bodyEl    = document.getElementById("fv-body");
+    if (!sectionEl || !bodyEl) return;
+
+    // Hide when no files are loaded
+    if (allFiles.length === 0) { sectionEl.hidden = true; return; }
+
+    // ── Group files by personId ──────────────────────────────
+    var persons = Object.create(null);
+    for (var i = 0; i < allFiles.length; i++) {
+      var f = allFiles[i];
+      var pid = f.personId;
+      if (!persons[pid]) {
+        persons[pid] = { main: [], subfolders: Object.create(null) };
+      }
+      if (f.isMainFolder) {
+        persons[pid].main.push(f);
+      } else {
+        if (!persons[pid].subfolders[f.folderName]) {
+          persons[pid].subfolders[f.folderName] = [];
+        }
+        persons[pid].subfolders[f.folderName].push(f);
+      }
+    }
+
+    var html = "";
+    var pids = Object.keys(persons);
+    for (var pi = 0; pi < pids.length; pi++) {
+      html += _buildFolderValidationCard(pids[pi], persons[pids[pi]]);
+    }
+
+    bodyEl.innerHTML = html || "<p class='fv-empty'>No subfolder data detected.</p>";
+    sectionEl.hidden = false;
+  }
+
+  function _buildFolderValidationCard(pid, p) {
+    var subfolderNames = Object.keys(p.subfolders);
+
+    // ── 1. Folder name check ────────────────────────────────────
+    var invalidFolders = subfolderNames.filter(function (n) { return n !== VALID_SUBFOLDER; });
+    var folderNameOk   = invalidFolders.length === 0;
+    var folderNameDetail;
+    if (folderNameOk) {
+      folderNameDetail = subfolderNames.length === 0
+        ? "No subfolders detected — <code>truth_images</code> not yet present"
+        : "Subfolder name matches <code>truth_images</code> exactly";
+    } else {
+      folderNameDetail = "Invalid subfolder name(s): " +
+        invalidFolders.map(function (n) { return "<code>" + escHtml(n) + "</code>"; }).join(", ") +
+        " — must be exactly <code>truth_images</code> (case-sensitive)";
+    }
+
+    // ── 2. Age gap check inside truth_images ───────────────────
+    var truthFiles  = p.subfolders[VALID_SUBFOLDER] || [];
+    var ageGapOk    = true;
+    var ageGapDetail;
+    var ageGapBadFiles = [];
+
+    if (truthFiles.length === 0) {
+      ageGapDetail = "No <code>truth_images</code> folder found — check not applicable";
+    } else if (truthFiles.length === 1) {
+      ageGapDetail = "Only 1 image in <code>truth_images</code> — gap check not applicable (always valid)";
+    } else {
+      // Collect files with extractable years
+      var yearsData = [];
+      for (var ti = 0; ti < truthFiles.length; ti++) {
+        var tf = truthFiles[ti];
+        if (tf.valid && tf.year !== null) {
+          yearsData.push({ year: tf.year, name: tf.name });
+        }
+      }
+      yearsData.sort(function (a, b) { return a.year - b.year; });
+
+      if (yearsData.length < 2) {
+        ageGapDetail = "Not enough dated images to perform gap check";
+      } else {
+        // Check every consecutive pair for minimum gap
+        var firstFail = null;
+        for (var yi = 1; yi < yearsData.length; yi++) {
+          var gap = yearsData[yi].year - yearsData[yi - 1].year;
+          if (gap < MIN_YEAR_GAP) {
+            ageGapOk  = false;
+            firstFail = { a: yearsData[yi - 1], b: yearsData[yi], gap: gap };
+            ageGapBadFiles.push(yearsData[yi - 1].name, yearsData[yi].name);
+            break; // report first violation only
+          }
+        }
+        if (ageGapOk) {
+          ageGapDetail = "All consecutive image pairs in <code>truth_images</code> have a " +
+            MIN_YEAR_GAP + "+ year gap";
+        } else {
+          ageGapDetail =
+            "Gap between <code>" + escHtml(firstFail.a.name) + "</code> (" + firstFail.a.year +
+            ") and <code>" + escHtml(firstFail.b.name) + "</code> (" + firstFail.b.year +
+            ") is <strong>" + firstFail.gap + " year(s)</strong> — minimum required is " + MIN_YEAR_GAP;
+        }
+      }
+    }
+
+    // Offending-files note (deduped)
+    var offendingHtml = "";
+    if (ageGapBadFiles.length) {
+      var seen = Object.create(null);
+      var unique = [];
+      for (var bi = 0; bi < ageGapBadFiles.length; bi++) {
+        if (!seen[ageGapBadFiles[bi]]) { seen[ageGapBadFiles[bi]] = 1; unique.push(ageGapBadFiles[bi]); }
+      }
+      offendingHtml = "<div class='fv-offending'>Offending files: " +
+        unique.map(function (n) { return "<code>" + escHtml(n) + "</code>"; }).join(", ") +
+        "</div>";
+    }
+
+    // ── 3. Total image count check ──────────────────────────────
+    var mainCount  = p.main.length;
+    var truthCount = truthFiles.length;
+    var total      = mainCount + truthCount;
+    var countOk    = total >= MIN_TOTAL_IMGS;
+    var countDetail = "Total: <strong>" + total + "</strong> image(s) " +
+      "(main folder: " + mainCount + " + truth_images: " + truthCount + ")";
+    if (!countOk) {
+      countDetail += " — minimum required is <strong>" + MIN_TOTAL_IMGS + "</strong>";
+    }
+
+    // ── Assemble card ───────────────────────────────────────────
+    var overallOk = folderNameOk && ageGapOk && countOk;
+    // Folder name is N/A (not a failure) if no subfolders at all
+    var folderStatus = folderNameOk
+      ? (subfolderNames.length === 0 ? '<span class="fv-status fv-na">— N/A</span>' : '<span class="fv-status fv-ok">✅ Valid</span>')
+      : '<span class="fv-status fv-fail">❌ Invalid</span>';
+    var ageStatus  = truthFiles.length === 0
+      ? '<span class="fv-status fv-na">— N/A</span>'
+      : (ageGapOk ? '<span class="fv-status fv-ok">✅ Valid</span>' : '<span class="fv-status fv-fail">❌ Invalid</span>');
+    var countStatus = countOk
+      ? '<span class="fv-status fv-ok">✅ Valid</span>'
+      : '<span class="fv-status fv-fail">❌ Invalid</span>';
+
+    return (
+      '<div class="fv-card ' + (overallOk ? "fv-card-ok" : "fv-card-err") + '">' +
+        '<div class="fv-card-hd">' +
+          '<span class="fv-pid">' + escHtml(pid) + '</span>' +
+          '<span class="fv-overall ' + (overallOk ? "fv-overall-ok" : "fv-overall-fail") + '">' +
+            (overallOk ? "✅ All checks passed" : "❌ Validation failed") +
+          '</span>' +
+        '</div>' +
+        '<div class="fv-table-wrap">' +
+          '<table class="fv-table">' +
+            '<thead><tr><th>Check</th><th>Status</th><th>Detail</th></tr></thead>' +
+            '<tbody>' +
+              '<tr class="' + (folderNameOk ? "fv-row-ok" : "fv-row-fail") + '">' +
+                '<td class="fv-check-name">Folder Name</td>' +
+                '<td>' + folderStatus + '</td>' +
+                '<td class="fv-detail">' + folderNameDetail + '</td>' +
+              '</tr>' +
+              '<tr class="' + (ageGapOk ? "fv-row-ok" : "fv-row-fail") + '">' +
+                '<td class="fv-check-name">Age Gap <span class="fv-sub">(truth_images)</span></td>' +
+                '<td>' + ageStatus + '</td>' +
+                '<td class="fv-detail">' + ageGapDetail + offendingHtml + '</td>' +
+              '</tr>' +
+              '<tr class="' + (countOk ? "fv-row-ok" : "fv-row-fail") + '">' +
+                '<td class="fv-check-name">Total Images</td>' +
+                '<td>' + countStatus + '</td>' +
+                '<td class="fv-detail">' + countDetail + '</td>' +
+              '</tr>' +
+            '</tbody>' +
+          '</table>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
      CLEAR
   ═══════════════════════════════════════════════════════════════ */
 
@@ -789,6 +973,8 @@
     if (sentinelObserver) { sentinelObserver.disconnect(); sentinelObserver = null; }
     statsEl.hidden = true; actionsEl.hidden = true;
     ageSectionEl.hidden = true; previewSection.hidden = true; tableHeaderBar.hidden = true;
+    var fvSection = document.getElementById("folder-validation-section");
+    if (fvSection) fvSection.hidden = true;
     if (sheetsExportWrap) { sheetsExportWrap.hidden = true; sheetsGridEl.innerHTML = ""; }
     setEmpty("Upload image files or drop a folder above to validate filenames.");
   }
